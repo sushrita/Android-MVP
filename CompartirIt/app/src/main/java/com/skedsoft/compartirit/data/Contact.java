@@ -7,6 +7,7 @@ package com.skedsoft.compartirit.data;
 
 public class Contact {
     private int id;
+    private String contactId;
     private String name;
     private String email;
     private boolean selected;
@@ -47,5 +48,26 @@ public class Contact {
 
     public void setSelected(boolean selected) {
         this.selected = selected;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Contact contact = (Contact) o;
+        return contactId.equals(contact.email);
+    }
+
+    @Override
+    public int hashCode() {
+        return contactId.hashCode();
+    }
+
+    public String getContactId() {
+        return contactId;
+    }
+
+    public void setContactId(String contactId) {
+        this.contactId = contactId;
     }
 }

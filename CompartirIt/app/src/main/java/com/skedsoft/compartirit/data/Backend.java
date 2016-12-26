@@ -15,7 +15,9 @@ import com.google.gson.Gson;
 import com.skedsoft.compartirit.home.player.VideoType;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Compartir It, All rights Reserved
@@ -58,7 +60,7 @@ public class Backend implements BackendSource {
         new Handler().postDelayed(new Runnable() {
             @Override
             public void run() {
-               if (user.getUsername().equals("test05media") && user.getPassword().equals("test05media")) {
+                if (user.getUsername().equals("test05media") && user.getPassword().equals("test05media")) {
                     user.setLoggedIn(true);
                     saveUser(user);
                     callback.onLoginSuccess(user);
@@ -91,7 +93,7 @@ public class Backend implements BackendSource {
 
             @Override
             protected List<Contact> doInBackground(Void... params) {
-                return fetchContacts();
+                return fetchContactsExt();
             }
 
             @Override
@@ -147,6 +149,38 @@ public class Backend implements BackendSource {
         return contacts;
     }
 
+    private ArrayList<Contact> fetchContactsExt() {
+        Set<Contact> contacts = new LinkedHashSet<>();
+        Uri URI_CONTACT_DATA = ContactsContract.Data.CONTENT_URI;
+        String[] PROJECTION = {ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME,
+                ContactsContract.CommonDataKinds.Phone.NUMBER,
+                ContactsContract.CommonDataKinds.Phone.CONTACT_ID,
+                ContactsContract.CommonDataKinds.Phone.DATA_SET,
+
+        };
+        String selection = ContactsContract.CommonDataKinds.Phone.IN_VISIBLE_GROUP + "=? AND "
+                + ContactsContract.CommonDataKinds.Phone.IS_PRIMARY + " = ?  AND " +
+                ContactsContract.CommonDataKinds.Phone.HAS_PHONE_NUMBER + " = ?  ";
+        // + ContactsContract.CommonDataKinds.Phone.DATA_SET + " IS NULL ";
+        final String[] selectionArgs = {"1", "1", "1"};
+        Cursor dataCursor = contentResolver.query(URI_CONTACT_DATA, PROJECTION, selection, selectionArgs, ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME);
+        if (dataCursor != null) {
+            while (dataCursor.moveToNext()) {
+                String dataSet = dataCursor.getString(dataCursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DATA_SET));
+                String name = dataCursor.getString(dataCursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME));
+                String number = dataCursor.getString(dataCursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
+                String contactId = dataCursor.getString(dataCursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.CONTACT_ID));
+                if (number != null) {//adding if email is available
+                    Contact contact = new Contact(name, number);
+                    contact.setContactId(contactId);
+                    contacts.add(contact);
+                }
+            }
+            dataCursor.close();
+        }
+        return new ArrayList<>(contacts);
+    }
+
     /**
      * Sets VideoType
      *
@@ -167,6 +201,7 @@ public class Backend implements BackendSource {
 
     /**
      * Saves user to shared preference
+     *
      * @param user
      */
     private void saveUser(User user) {
